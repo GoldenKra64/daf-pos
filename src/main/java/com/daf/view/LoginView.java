@@ -1,8 +1,25 @@
 package com.daf.view;
 
-import javax.swing.*;
+import java.awt.BorderLayout;
+import java.awt.Color;
+import java.awt.Dimension;
+import java.awt.Font;
+import java.awt.GridBagConstraints;
+import java.awt.GridBagLayout;
+import java.awt.Insets;
+import java.awt.Toolkit;
+
+import javax.swing.ImageIcon;
+import javax.swing.JButton;
+import javax.swing.JFrame;
+import javax.swing.JLabel;
+import javax.swing.JOptionPane;
+import javax.swing.JPanel;
+import javax.swing.JPasswordField;
+import javax.swing.JTextField;
+import javax.swing.SwingConstants;
+import javax.swing.UIManager;
 import javax.swing.border.LineBorder;
-import java.awt.*;
 
 public class LoginView extends JFrame {
 
@@ -11,7 +28,9 @@ public class LoginView extends JFrame {
     private JButton btnIngresar;
 
     public LoginView() {
-        setTitle("Ingreso de Usuarios");
+        setSize(800, 600);
+        setLocationRelativeTo(null);
+        setTitle("Decoraciones de Arreglos Florales - Ingreso de Usuarios");
         setExtendedState(JFrame.MAXIMIZED_BOTH);
         setDefaultCloseOperation(JFrame.EXIT_ON_CLOSE);
         setLayout(new BorderLayout());
@@ -48,6 +67,8 @@ public class LoginView extends JFrame {
         txtUsuario.setNextFocusableComponent(txtPassword);
         txtPassword.setNextFocusableComponent(btnIngresar);
         btnIngresar.setNextFocusableComponent(txtUsuario);
+
+        UIManager.put("Button.defaultButtonFollowsFocus", Boolean.TRUE);
 
         gbc.gridy = 0;
         panelLogin.add(lblTitulo, gbc);
