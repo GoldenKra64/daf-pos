@@ -1,15 +1,33 @@
 package com.daf.database;
 
+import java.io.FileInputStream;
+import java.io.IOException;
 import java.sql.Connection;
 import java.sql.DriverManager;
 import java.sql.SQLException;
+import java.util.Properties;
 
 public class PostgreSQLConnection {
+    Properties props = new Properties();
 
-    private static final String URL =
-            "jdbc:postgresql://localhost:5432/tu_base_datos";
+    public PostgreSQLConnection(){
+        loadProperties();
+    }
+
+    private void loadProperties(){
+        // cargar properties de properties.conf
+        try (FileInputStream in = new FileInputStream("src/main/resources/config.properties")) {
+            props.load(in);
+        } catch (IOException e) {
+            e.printStackTrace();
+        }
+    }
 
     public Connection conectar(String usuario, String password) throws SQLException {
-        return DriverManager.getConnection(URL, usuario, password);
+        String connectionString = props.getProperty("CONNECTION_STRING") +
+                props.getProperty("IP") + ":" +
+                props.getProperty("PORT") + "/" +
+                props.getProperty("DATABASE");
+        return DriverManager.getConnection(connectionString, usuario, password);
     }
 }
