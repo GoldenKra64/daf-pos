@@ -108,6 +108,10 @@ public class LoginView extends JFrame {
         return new String(txtPassword.getPassword());
     }
 
+    public JFrame getFrame() {
+        return (JFrame) this;
+    }
+
     public JButton getBtnIngresar() {
         return btnIngresar;
     }
