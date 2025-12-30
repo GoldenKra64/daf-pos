@@ -6,18 +6,18 @@ import java.sql.SQLException;
 import javax.swing.JFrame;
 import javax.swing.JOptionPane;
 
-import com.daf.database.PostgreSQLConnection;
+import com.daf.model.LoginModel;
 import com.daf.view.LoginView;
 import com.daf.view.MenuPrincipal;
 
 public class LoginController {
 
     private LoginView view;
-    private PostgreSQLConnection model;
+    private LoginModel model;
 
-    public LoginController(LoginView view, PostgreSQLConnection model) {
+    public LoginController(LoginView view) {
         this.view = view;
-        this.model = model;
+        this.model = new LoginModel();
 
         this.view.getBtnIngresar().addActionListener(e -> autenticar());
     }
@@ -26,16 +26,16 @@ public class LoginController {
         String usuario = view.getUsuario();
         String password = view.getPassword();
 
-        try (Connection conn = model.conectar(usuario, password)) {
+        try {
+            Connection conn = model.autenticar(usuario, password);
 
             view.mostrarMensaje(
-                    "Conexión exitosa a la base de datos",
-                    JOptionPane.INFORMATION_MESSAGE
+                "Bienvenido al sistema",
+                JOptionPane.INFORMATION_MESSAGE
             );
 
-            
-            MenuPrincipal menuPrincipal = new MenuPrincipal();
-            new MenuController(menuPrincipal);
+            // Pasar la conexión al resto del sistema
+            MenuPrincipal menuPrincipal = new MenuPrincipal(conn);
 
             JFrame frame = view.getFrame();
             frame.setContentPane(menuPrincipal);
@@ -44,8 +44,8 @@ public class LoginController {
 
         } catch (SQLException ex) {
             view.mostrarMensaje(
-                    "Error de conexión:\nUsuario o contraseña incorrectos",
-                    JOptionPane.ERROR_MESSAGE
+                "Usuario o contraseña incorrectos",
+                JOptionPane.ERROR_MESSAGE
             );
         }
     }
