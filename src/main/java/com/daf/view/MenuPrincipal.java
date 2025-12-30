@@ -9,34 +9,56 @@ import java.awt.Dimension;
 import java.awt.Font;
 import java.awt.GridLayout;
 import java.awt.event.ActionListener;
+import java.io.FileInputStream;
+import java.io.IOException;
+import java.sql.Connection;
 import java.util.HashMap;
 import java.util.Map;
+import java.util.Properties;
 
 import javax.swing.BorderFactory;
 import javax.swing.JButton;
 import javax.swing.JMenu;
 import javax.swing.JMenuBar;
+import javax.swing.JMenuItem;
+import javax.swing.JOptionPane;
 import javax.swing.JPanel;
 import javax.swing.UIManager;
 import javax.swing.border.LineBorder;
 
+import com.daf.view.materiaprima.MateriaPrimaView;
+
 public class MenuPrincipal extends JPanel {
 
+    private Properties props = new Properties();
     private CardLayout cardLayout;
+    private JMenuBar menuBar;
     private JPanel panelCentral;
     private JPanel panelMenuBotones;
 
     private Map<String, JPanel> vistas;
 
-    public MenuPrincipal() {
-        vistas = new HashMap<>();
+    private Connection conn;
 
+    public MenuPrincipal(Connection connection) {
+        vistas = new HashMap<>();
+        this.conn = connection;
+
+        loadProperties();
         configurarUIManager();
         setLayout(new BorderLayout());
         setBackground(new Color(255, 220, 170));
         crearBarraMenu();
         crearPanelCentral();
         crearMenuBotones();
+    }
+
+    private void loadProperties() {
+        try (FileInputStream fis = new FileInputStream("src/main/resources/config.properties")) {
+            props.load(fis);
+        } catch (IOException e) {
+            e.printStackTrace();
+        }
     }
 
     private void configurarUIManager() {
@@ -47,28 +69,55 @@ public class MenuPrincipal extends JPanel {
     }
 
     /* Menu Bar */
-
     private void crearBarraMenu() {
-        JMenuBar menuBar = new JMenuBar();
+        menuBar = new JMenuBar();
         menuBar.setBackground(new Color(255, 165, 0));
         menuBar.setOpaque(true);
 
-        menuBar.add(crearMenu("Archivo"));
-        menuBar.add(crearMenu("Catalogo"));
-        menuBar.add(crearMenu("Proceso"));
-        menuBar.add(crearMenu("Salir"));
+        JMenu menuArchivo = crearMenu("Archivo");
+        JMenu menuCatalogo = crearMenu("Catalogo");
+        JMenu menuProceso = crearMenu("Proceso");
+        JMenu menuSalir = crearMenu("Salir");
+
+        menuArchivo.setToolTipText("Regresa al menu principal");
+        menuCatalogo.setToolTipText("Acceder a las clases independientes");
+        menuProceso.setToolTipText("Acceder a las clases dependientes");
+        menuSalir.setToolTipText("Salir del sistema");
+
+        // ARCHIVO
+        menuArchivo.add(crearMenuItem("Menú Principal", e -> regresarMenu()));
+
+        // CATALOGOS
+        menuCatalogo.add(crearMenuItem("Materia Prima", e -> abrirMateriaPrima()));
+        menuCatalogo.add(crearMenuItem("Producto", e -> abrirProducto()));
+        menuCatalogo.add(crearMenuItem("Proveedor", e -> abrirProveedor()));
+        menuCatalogo.add(crearMenuItem("Cliente", e -> abrirCliente()));
+
+        // PROCESOS
+        menuProceso.add(crearMenuItem("Bodega", e -> abrirBodega()));
+        menuProceso.add(crearMenuItem("Orden de Compra", e -> abrirOrdenCompra()));
+        menuProceso.add(crearMenuItem("Factura", e -> abrirFactura()));
+        menuProceso.add(crearMenuItem("Estandar", e -> abrirEstandar()));
+
+        // SALIR
+        menuSalir.add(crearMenuItem("Salir del Sistema", e -> System.exit(0)));
+
+        menuBar.add(menuArchivo);
+        menuBar.add(menuCatalogo);
+        menuBar.add(menuProceso);
+        menuBar.add(menuSalir);
 
         add(menuBar, BorderLayout.NORTH);
     }
 
+
     private JMenu crearMenu(String titulo) {
         JMenu menu = new JMenu(titulo);
-        menu.setFont(new Font("Arial", Font.BOLD, 14));
+        menu.setFont(new Font(props.getProperty("FONT_FAMILY"), Font.BOLD, Integer.parseInt(props.getProperty("FONT_SIZE"))));
         return menu;
     }
 
     /* Panel central */
-
     private void crearPanelCentral() {
         cardLayout = new CardLayout();
         panelCentral = new JPanel(cardLayout);
@@ -84,31 +133,33 @@ public class MenuPrincipal extends JPanel {
                 BorderFactory.createEmptyBorder(50, 50, 50, 50)
         );
 
-        panelMenuBotones.add(crearBotonMenu("Sistema Independiente", "INDEPENDIENTE"));
-        panelMenuBotones.add(crearBotonMenu("Sistema Dependiente", "DEPENDIENTE"));
-        panelMenuBotones.add(crearBotonMenu("Otro", "OTRO_1"));
-        panelMenuBotones.add(crearBotonMenu("Otro", "OTRO_2"));
+        // Botones de la interfaz principal
+        panelMenuBotones.add(crearBotonMenu("Materia Prima", e -> abrirMateriaPrima()));
+        panelMenuBotones.add(crearBotonMenu("Producto", e -> abrirProducto()));
+        panelMenuBotones.add(crearBotonMenu("Proveedor", e -> abrirProveedor()));
+        panelMenuBotones.add(crearBotonMenu("Cliente", e -> abrirCliente()));
+
+        panelMenuBotones.add(crearBotonMenu("Factura", e -> abrirFactura()));
+        panelMenuBotones.add(crearBotonMenu("Órden de Compra", e -> abrirOrdenCompra()));
+        panelMenuBotones.add(crearBotonMenu("Estándar", e -> abrirEstandar()));
+        panelMenuBotones.add(crearBotonMenu("Bodega", e -> abrirBodega()));
+
 
         panelCentral.add(panelMenuBotones, "MENU");
         cardLayout.show(panelCentral, "MENU");
     }
 
     /* Creación de botones */
-
-    private JButton crearBotonMenu(String texto, String accion) {
+    private JButton crearBotonMenu(String texto, ActionListener action) {
         JButton boton = new JButton(texto);
-        boton.setActionCommand(accion);
-
-        boton.setPreferredSize(new Dimension(100, 50)); // 🔹 50x100
+        boton.setPreferredSize(new Dimension(100, 50));
         boton.setFocusable(true);
         boton.setBackground(new Color(255, 165, 0));
         boton.setBorder(new LineBorder(Color.BLACK, 2));
-        boton.setFont(new Font("Arial", Font.BOLD, 14));
-
+        boton.setFont(new Font(props.getProperty("FONT_FAMILY"), Font.BOLD, Integer.parseInt(props.getProperty("FONT_SIZE"))));
+        boton.addActionListener(action);
         return boton;
     }
-
-    /* Métodos del controller */
 
     public void registrarVista(String nombre, JPanel vista) {
         vista.setOpaque(false);
@@ -135,5 +186,68 @@ public class MenuPrincipal extends JPanel {
                 recorrerComponentes((Container) comp, l);
             }
         }
+    }
+
+    private JMenuItem crearMenuItem(String texto, ActionListener action) {
+        JMenuItem item = new JMenuItem(texto);
+        item.addActionListener(action);
+        return item;
+    }
+
+    // Funcionalidades del menú
+    private void abrirMateriaPrima() {
+        if (!vistas.containsKey("MATERIA_PRIMA")) {
+            registrarVista("MATERIA_PRIMA", new MateriaPrimaView(conn, this));
+        }
+        mostrarVista("MATERIA_PRIMA");
+    }
+
+    private void abrirProducto() {
+        mostrarNoImplementado("Producto");
+    }
+
+    private void abrirProveedor() {
+        mostrarNoImplementado("Proveedor");
+    }
+
+    private void abrirCliente() {
+        mostrarNoImplementado("Cliente");
+    }
+
+    private void abrirBodega() {
+        mostrarNoImplementado("Bodega");
+    }
+
+    private void abrirOrdenCompra() {
+        mostrarNoImplementado("Orden de Compra");
+    }
+
+    private void abrirFactura() {
+        mostrarNoImplementado("Factura");
+    }
+
+    private void abrirEstandar() {
+        mostrarNoImplementado("Estandar");
+    }
+
+    public void regresarMenu() {
+        if (!vistas.containsKey("MENU")) {
+            registrarVista("MENU", new MenuPrincipal(conn));
+        }
+        remove(menuBar);
+        mostrarVista("MENU");
+    }
+
+    private void mostrarNoImplementado(String modulo) {
+        JOptionPane.showMessageDialog(
+            this,
+            "La funcionalidad de " + modulo + " no está implementada.",
+            "Funcionalidad no disponible",
+            JOptionPane.WARNING_MESSAGE
+        );
+    }
+
+    public Connection getConnection() {
+        return this.conn;
     }
 }

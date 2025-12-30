@@ -15,7 +15,6 @@ public class PostgreSQLConnection {
     }
 
     private void loadProperties(){
-        // cargar properties de properties.conf
         try (FileInputStream in = new FileInputStream("src/main/resources/config.properties")) {
             props.load(in);
         } catch (IOException e) {

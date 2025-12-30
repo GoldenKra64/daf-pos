@@ -30,14 +30,14 @@ public class LoginView extends JFrame {
     public LoginView() {
         setSize(800, 600);
         setLocationRelativeTo(null);
-        setTitle("Decoraciones de Arreglos Florales - Ingreso de Usuarios");
+        setTitle("Decoraciones de Arreglos Florales");
         setExtendedState(JFrame.MAXIMIZED_BOTH);
         setDefaultCloseOperation(JFrame.EXIT_ON_CLOSE);
         setLayout(new BorderLayout());
 
         JPanel panelLogin = new JPanel();
         panelLogin.setPreferredSize(new Dimension(
-                (int) (Toolkit.getDefaultToolkit().getScreenSize().width * 0.25),
+                (int) (Toolkit.getDefaultToolkit().getScreenSize().width / 3),
                 Toolkit.getDefaultToolkit().getScreenSize().height
         ));
         panelLogin.setLayout(new GridBagLayout());
