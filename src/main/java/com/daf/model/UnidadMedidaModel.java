@@ -12,7 +12,6 @@ public class UnidadMedidaModel {
         this.conn = conn;
     }
 
-    // Obtener todas las unidades de medida
     public List<UnidadMedida> getAll() {
         List<UnidadMedida> unidades = new ArrayList<>();
         String sql = "SELECT um_codigo, um_descripcion FROM unidadmedida ORDER BY um_descripcion";

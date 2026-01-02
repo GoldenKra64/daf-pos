@@ -26,6 +26,7 @@ import javax.swing.JPanel;
 import javax.swing.UIManager;
 import javax.swing.border.LineBorder;
 
+import com.daf.view.kardex.KardexView;
 import com.daf.view.materiaprima.MateriaPrimaView;
 
 public class MenuPrincipal extends JPanel {
@@ -215,7 +216,10 @@ public class MenuPrincipal extends JPanel {
     }
 
     private void abrirBodega() {
-        mostrarNoImplementado("Bodega");
+        if (!vistas.containsKey("KARDEX")) {
+            registrarVista("KARDEX", new KardexView(conn, this));
+        }
+        mostrarVista("KARDEX");
     }
 
     private void abrirOrdenCompra() {
