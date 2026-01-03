@@ -1,9 +1,13 @@
 package com.daf.model;
 
-import com.daf.controller.MateriaPrima;
-import java.sql.*;
+import java.sql.Connection;
+import java.sql.PreparedStatement;
+import java.sql.ResultSet;
+import java.sql.SQLException;
 import java.util.ArrayList;
 import java.util.List;
+
+import com.daf.controller.MateriaPrima;
 
 public class MateriaPrimaModel {
     private Connection conn;
@@ -12,7 +16,6 @@ public class MateriaPrimaModel {
         this.conn = conn;
     }
 
-    // Generar el siguiente código MP####
     public String generateNextCode() {
         String sql = "SELECT mp_codigo FROM materia_prima ORDER BY mp_codigo DESC LIMIT 1";
         try (PreparedStatement pstmt = conn.prepareStatement(sql);
@@ -21,13 +24,13 @@ public class MateriaPrimaModel {
             if (rs.next()) {
                 String lastCode = rs.getString("mp_codigo").substring(2).replace(" ", "");
                 int number = Integer.parseInt(lastCode) + 1;
-                return String.format("MP%04d", number);
+                return String.format("MP%08d", number);
             } else {
-                return "MP0001";
+                return "MP00000001";
             }
         } catch (SQLException e) {
             System.err.println("Error al generar código: " + e.getMessage());
-            return "MP0001";
+            return "MP00000001";
         }
     }
 
@@ -55,9 +58,9 @@ public class MateriaPrimaModel {
         }
     }
 
-    // Eliminar (cambiar estado a INA)
+    // Eliminar
     public boolean delete(String mpCod) {
-        String sql = "UPDATE materia_prima SET mp_estado = 'INA' WHERE mp_codigo = ?";
+        String sql = "UPDATE materia_prima SET mp_estado = 'INA', mp_fecha_alta = CURRENT_DATE WHERE mp_codigo = ?";
 
         try (PreparedStatement pstmt = conn.prepareStatement(sql)) {
             pstmt.setString(1, mpCod);

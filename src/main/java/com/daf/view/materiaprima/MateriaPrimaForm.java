@@ -1,15 +1,41 @@
 package com.daf.view.materiaprima;
 
-import com.daf.controller.MateriaPrima;
-import com.daf.controller.UnidadMedida;
-import javax.swing.*;
-import javax.swing.event.DocumentEvent;
-import javax.swing.event.DocumentListener;
-import java.awt.*;
+import java.awt.BorderLayout;
+import java.awt.CardLayout;
+import java.awt.Color;
+import java.awt.Component;
+import java.awt.Dimension;
+import java.awt.FlowLayout;
+import java.awt.Font;
+import java.io.FileInputStream;
 import java.sql.Connection;
 import java.util.List;
+import java.util.Properties;
+
+import javax.swing.BorderFactory;
+import javax.swing.Box;
+import javax.swing.BoxLayout;
+import javax.swing.DefaultListCellRenderer;
+import javax.swing.JButton;
+import javax.swing.JComboBox;
+import javax.swing.JComponent;
+import javax.swing.JLabel;
+import javax.swing.JList;
+import javax.swing.JOptionPane;
+import javax.swing.JPanel;
+import javax.swing.JScrollPane;
+import javax.swing.JSpinner;
+import javax.swing.JTextField;
+import javax.swing.SpinnerNumberModel;
+import javax.swing.event.DocumentEvent;
+import javax.swing.event.DocumentListener;
+
+import com.daf.controller.MateriaPrima;
+import com.daf.controller.UnidadMedida;
 
 public class MateriaPrimaForm extends JPanel {
+    private Properties props;
+
     private Connection conn;
     private MateriaPrimaView vistaAnterior;
     private MateriaPrima materiaPrimaActual;
@@ -35,10 +61,20 @@ public class MateriaPrimaForm extends JPanel {
         this.vistaAnterior = vistaAnterior;
         this.materiaPrimaActual = materiaPrima;
         this.unidadMedidaDP = new UnidadMedida(conn);
+        loadProperties();
 
         initComponents();
         if (materiaPrima != null) {
             cargarDatos(materiaPrima);
+        }
+    }
+
+    private void loadProperties() {
+        props = new Properties();
+        try (FileInputStream fis = new FileInputStream("src/main/resources/config.properties")) {
+            props.load(fis);
+        } catch (Exception e) {
+            e.printStackTrace();
         }
     }
 
@@ -54,7 +90,7 @@ public class MateriaPrimaForm extends JPanel {
 
         // Título
         JLabel lblTitulo = new JLabel(materiaPrimaActual == null ? "NUEVA MATERIA PRIMA" : "EDITAR MATERIA PRIMA");
-        lblTitulo.setFont(new Font("Arial", Font.BOLD, 20));
+        lblTitulo.setFont(new Font(props.getProperty("FONT_FAMILY"), Font.BOLD, Integer.parseInt(props.getProperty("FONT_SIZE_TITLE"))));
         lblTitulo.setAlignmentX(Component.CENTER_ALIGNMENT);
         panelPrincipal.add(lblTitulo);
         panelPrincipal.add(Box.createRigidArea(new Dimension(0, 30)));
@@ -94,7 +130,7 @@ public class MateriaPrimaForm extends JPanel {
         panelPrincipal.add(Box.createRigidArea(new Dimension(0, 15)));
 
         // Prioridad
-        String[] prioridades = {"Seleccione...", "F - FIFO", "L - LIFO"};
+        String[] prioridades = {"Seleccione...", "FIFO", "LIFO"};
         cmbPrioridad = new JComboBox<>(prioridades);
         cmbPrioridad.setMaximumSize(new Dimension(Integer.MAX_VALUE, 30));
         cmbPrioridad.addActionListener(e -> validarPrioridad());
@@ -164,7 +200,7 @@ public class MateriaPrimaForm extends JPanel {
         panel.setBackground(Color.WHITE);
 
         JLabel lbl = new JLabel(etiqueta);
-        lbl.setFont(new Font("Arial", Font.BOLD, 14));
+        lbl.setFont(new Font(props.getProperty("FONT_FAMILY"), Font.PLAIN, Integer.parseInt(props.getProperty("FONT_SIZE"))));
         lbl.setAlignmentX(Component.LEFT_ALIGNMENT);
         panel.add(lbl);
         panel.add(Box.createRigidArea(new Dimension(0, 5)));
@@ -178,7 +214,7 @@ public class MateriaPrimaForm extends JPanel {
     private JLabel crearLabelError() {
         JLabel lbl = new JLabel(" ");
         lbl.setForeground(Color.RED);
-        lbl.setFont(new Font("Arial", Font.PLAIN, 12));
+        lbl.setFont(new Font(props.getProperty("FONT_FAMILY"), Font.PLAIN, Integer.parseInt(props.getProperty("FONT_SIZE"))));
         lbl.setAlignmentX(Component.LEFT_ALIGNMENT);
         lbl.setMaximumSize(new Dimension(Integer.MAX_VALUE, 20));
         return lbl;

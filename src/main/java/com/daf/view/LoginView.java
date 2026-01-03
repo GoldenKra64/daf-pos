@@ -8,6 +8,9 @@ import java.awt.GridBagConstraints;
 import java.awt.GridBagLayout;
 import java.awt.Insets;
 import java.awt.Toolkit;
+import java.io.FileInputStream;
+import java.io.IOException;
+import java.util.Properties;
 
 import javax.swing.ImageIcon;
 import javax.swing.JButton;
@@ -22,15 +25,17 @@ import javax.swing.UIManager;
 import javax.swing.border.LineBorder;
 
 public class LoginView extends JFrame {
-
+    private Properties props;
+    
     private JTextField txtUsuario;
     private JPasswordField txtPassword;
     private JButton btnIngresar;
 
     public LoginView() {
+        loadProperties();
         setSize(800, 600);
         setLocationRelativeTo(null);
-        setTitle("Decoraciones de Arreglos Florales");
+        setTitle(props.getProperty("APP_NAME"));
         setExtendedState(JFrame.MAXIMIZED_BOTH);
         setDefaultCloseOperation(JFrame.EXIT_ON_CLOSE);
         setLayout(new BorderLayout());
@@ -50,14 +55,14 @@ public class LoginView extends JFrame {
         gbc.fill = GridBagConstraints.HORIZONTAL;
 
         JLabel lblTitulo = new JLabel("Ingreso de Usuarios");
-        lblTitulo.setFont(new Font("Arial", Font.BOLD, 22));
+        lblTitulo.setFont(new Font(props.getProperty("FONT_FAMILY"), Font.BOLD, Integer.parseInt(props.getProperty("FONT_SIZE_TITLE"))));
         lblTitulo.setHorizontalAlignment(SwingConstants.CENTER);
 
         txtUsuario = new JTextField();
         txtPassword = new JPasswordField();
 
         btnIngresar = new JButton("INGRESAR");
-        btnIngresar.setFont(new Font("Arial", Font.BOLD, 16));
+        btnIngresar.setFont(new Font(props.getProperty("FONT_FAMILY"), Font.BOLD, Integer.parseInt(props.getProperty("FONT_SIZE"))));
         btnIngresar.setBackground(new Color(255, 140, 0));
         btnIngresar.setForeground(Color.BLACK);
         btnIngresar.setBorder(new LineBorder(Color.BLACK, 2));
@@ -100,6 +105,14 @@ public class LoginView extends JFrame {
         add(lblImagen, BorderLayout.CENTER);
     }
 
+    private void loadProperties(){
+        props = new Properties();
+        try (FileInputStream fis = new FileInputStream("src/main/resources/config.properties")) {
+            props.load(fis);
+        } catch (IOException ex) {
+            ex.printStackTrace();
+        }
+    }
     public String getUsuario() {
         return txtUsuario.getText();
     }

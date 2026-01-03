@@ -1,11 +1,15 @@
 package com.daf.controller;
 
+import java.io.FileInputStream;
+import java.io.IOException;
 import java.sql.Connection;
 import java.util.List;
+import java.util.Properties;
 
 import com.daf.model.MateriaPrimaModel;
 
 public class MateriaPrima {
+    private Properties props;
     private String mpCodigo;
     private String umCompra;
     private String mpDescripcion;
@@ -13,11 +17,22 @@ public class MateriaPrima {
     private Integer mpCantidad;
     private String mpPrioridad;
     private String mpEstado;
-    private MateriaPrimaModel model;
 
+    private MateriaPrimaModel model;
     public MateriaPrima(Connection conn) {
+        loadProperties();
+
         this.model = new MateriaPrimaModel(conn);
-        this.mpEstado = "ACT";
+        this.mpEstado = props.getProperty("ESTADO_INDEPENDIENTE_INICIAL");
+    }
+    
+    private void loadProperties() {
+        props = new Properties();
+        try (FileInputStream fis = new FileInputStream("src/main/resources/config.properties")) {
+            props.load(fis);
+        } catch (IOException e) {
+            e.printStackTrace();
+        }
     }
 
     public MateriaPrima(String mpCodigo, String umCompra, String mpDescripcion,

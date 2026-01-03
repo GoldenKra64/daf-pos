@@ -1,4 +1,4 @@
-package com.daf.view.materiaprima;
+package com.daf.view.kardex;
 
 import java.awt.BorderLayout;
 import java.awt.Color;
@@ -8,6 +8,7 @@ import java.awt.FlowLayout;
 import java.awt.Font;
 import java.io.FileInputStream;
 import java.sql.Connection;
+import java.text.SimpleDateFormat;
 import java.util.List;
 import java.util.Properties;
 
@@ -15,7 +16,6 @@ import javax.swing.DefaultCellEditor;
 import javax.swing.JButton;
 import javax.swing.JCheckBox;
 import javax.swing.JLabel;
-import javax.swing.JOptionPane;
 import javax.swing.JPanel;
 import javax.swing.JScrollPane;
 import javax.swing.JTable;
@@ -23,18 +23,18 @@ import javax.swing.JTextField;
 import javax.swing.table.DefaultTableModel;
 import javax.swing.table.TableCellRenderer;
 
-import com.daf.controller.MateriaPrima;
+import com.daf.controller.Kardex;
 import com.daf.view.MenuPrincipal;
 
-public class MateriaPrimaView extends JPanel {
+public class KardexView extends JPanel {
     private Properties props;
     
     private Connection conn;
     private MenuPrincipal menuPrincipal;
-    private MateriaPrima materiaPrimaDP;
+    private Kardex kardexDP;
 
     private JTextField txtBuscar;
-    private JButton btnRegresar, btnBuscar, btnCrear;
+    private JButton btnRegresar, btnBuscar;
     private JTable table;
     private DefaultTableModel tableModel;
     private JLabel lblPaginacion;
@@ -42,13 +42,15 @@ public class MateriaPrimaView extends JPanel {
 
     private int paginaActual = 1;
     private int REGISTROS_POR_PAGINA;
-    private List<MateriaPrima> todosLosRegistros;
-    private List<MateriaPrima> registrosFiltrados;
+    private List<Kardex> todosLosRegistros;
+    private List<Kardex> registrosFiltrados;
+    
+    private SimpleDateFormat dateFormat = new SimpleDateFormat("dd/MM/yyyy HH:mm");
 
-    public MateriaPrimaView(Connection conn, MenuPrincipal menuPrincipal) {
+    public KardexView(Connection conn, MenuPrincipal menuPrincipal) {
         this.conn = conn;
         this.menuPrincipal = menuPrincipal;
-        this.materiaPrimaDP = new MateriaPrima(conn);
+        this.kardexDP = new Kardex(conn);
 
         loadProperties();
 
@@ -82,7 +84,7 @@ public class MateriaPrimaView extends JPanel {
 
         add(panelSuperior, BorderLayout.NORTH);
 
-        // Panel de búsqueda y crear
+        // Panel de búsqueda
         JPanel panelBusqueda = new JPanel(new FlowLayout(FlowLayout.LEFT, 10, 10));
         panelBusqueda.setBackground(new Color(255, 239, 204));
 
@@ -92,15 +94,8 @@ public class MateriaPrimaView extends JPanel {
 
         btnBuscar = new JButton("Buscar");
         btnBuscar.setBackground(new Color(255, 178, 102));
-        btnBuscar.addActionListener(e -> buscarMateriaPrima());
+        btnBuscar.addActionListener(e -> buscarKardex());
         panelBusqueda.add(btnBuscar);
-
-        btnCrear = new JButton("Crear");
-        btnCrear.setBackground(new Color(255, 178, 102));
-        btnCrear.addActionListener(e -> abrirFormularioCrear());
-        panelBusqueda.add(btnCrear);
-
-        add(panelBusqueda, BorderLayout.CENTER);
 
         // Crear panel principal que contendrá búsqueda y tabla
         JPanel panelPrincipal = new JPanel(new BorderLayout(10, 10));
@@ -108,18 +103,27 @@ public class MateriaPrimaView extends JPanel {
         panelPrincipal.add(panelBusqueda, BorderLayout.NORTH);
 
         // Panel de tabla
-        String[] columnas = {"Unidad Medida", "Descripción", "Precio", "Cantidad", "Prioridad", "Acciones"};
+        String[] columnas = {"Origen", "Cantidad", "Total", "Fecha/Hora", "Acción", "Usuario", "Editar"};
         tableModel = new DefaultTableModel(columnas, 0) {
             @Override
             public boolean isCellEditable(int row, int column) {
-                return column == 5;
+                return column == 6; // Columna editable
             }
         };
 
         table = new JTable(tableModel);
         table.setRowHeight(40);
-        table.getColumnModel().getColumn(5).setCellRenderer(new ButtonRenderer());
-        table.getColumnModel().getColumn(5).setCellEditor(new ButtonEditor(new JCheckBox()));
+        table.getColumnModel().getColumn(6).setCellRenderer(new ButtonRenderer());
+        table.getColumnModel().getColumn(6).setCellEditor(new ButtonEditor(new JCheckBox()));
+        
+        // Ajustar anchos de columnas
+        table.getColumnModel().getColumn(0).setPreferredWidth(150); // Origen
+        table.getColumnModel().getColumn(1).setPreferredWidth(70);  // Cantidad
+        table.getColumnModel().getColumn(2).setPreferredWidth(70);  // Total
+        table.getColumnModel().getColumn(3).setPreferredWidth(130); // Fecha
+        table.getColumnModel().getColumn(4).setPreferredWidth(200); // Acción
+        table.getColumnModel().getColumn(5).setPreferredWidth(120); // Usuario
+        table.getColumnModel().getColumn(6).setPreferredWidth(100); // Editar
 
         JScrollPane scrollPane = new JScrollPane(table);
         scrollPane.setBackground(new Color(255, 178, 102));
@@ -136,7 +140,7 @@ public class MateriaPrimaView extends JPanel {
         panelPaginacion.add(btnAnterior);
 
         lblPaginacion = new JLabel("1/1");
-        lblPaginacion.setFont(new Font(props.getProperty("FONT_FAMILY"), Font.PLAIN, Integer.parseInt(props.getProperty("FONT_SIZE"))));
+        lblPaginacion.setFont(new Font(props.getProperty("FONT_FAMILY"), Font.BOLD, Integer.parseInt(props.getProperty("FONT_SIZE"))));
         panelPaginacion.add(lblPaginacion);
 
         btnSiguiente = new JButton("Siguiente >");
@@ -147,7 +151,7 @@ public class MateriaPrimaView extends JPanel {
     }
 
     private void cargarDatos() {
-        todosLosRegistros = materiaPrimaDP.getAllDP();
+        todosLosRegistros = kardexDP.getAllDP();
         registrosFiltrados = todosLosRegistros;
         paginaActual = 1;
         actualizarTabla();
@@ -163,14 +167,15 @@ public class MateriaPrimaView extends JPanel {
         int fin = Math.min(inicio + REGISTROS_POR_PAGINA, registrosFiltrados.size());
 
         for (int i = inicio; i < fin; i++) {
-            MateriaPrima mp = registrosFiltrados.get(i);
+            Kardex k = registrosFiltrados.get(i);
             Object[] fila = {
-                mp.getUmCompra(),
-                mp.getMpDescripcion(),
-                String.format("$%.2f", mp.getMpPrecioCompra()),
-                mp.getMpCantidad(),
-                mp.getMpPrioridad().equals("F") ? "FIFO" : "LIFO",
-                mp.getMpCodigo()
+                k.getOrigen(),
+                k.getKrdCantidad(),
+                k.getKrdQtyTotal(),
+                k.getKrdFechahora() != null ? dateFormat.format(k.getKrdFechahora()) : "N/A",
+                k.getKrdAccion(),
+                k.getUsrId(),
+                k.getKrdCodigo()    // Para el update
             };
             tableModel.addRow(fila);
         }
@@ -180,12 +185,12 @@ public class MateriaPrimaView extends JPanel {
         btnSiguiente.setEnabled(paginaActual < totalPaginas);
     }
 
-    private void buscarMateriaPrima() {
+    private void buscarKardex() {
         String busqueda = txtBuscar.getText().trim();
         if (busqueda.isEmpty()) {
             registrosFiltrados = todosLosRegistros;
         } else {
-            registrosFiltrados = materiaPrimaDP.getByNameDP(busqueda);
+            registrosFiltrados = kardexDP.getByNameDP(busqueda);
         }
         paginaActual = 1;
         actualizarTabla();
@@ -206,53 +211,20 @@ public class MateriaPrimaView extends JPanel {
         }
     }
 
-    private void abrirFormularioCrear() {
-        MenuPrincipal menu = menuPrincipal;
-        MateriaPrimaForm form = new MateriaPrimaForm(conn, this, null);
-        menu.registrarVista("MATERIA_PRIMA_FORM", form);
-        menu.mostrarVista("MATERIA_PRIMA_FORM");
-    }
-
-    private void abrirFormularioEditar(String mpCodigo) {
-        MateriaPrima mp = null;
-        for (MateriaPrima m : todosLosRegistros) {
-            if (m.getMpCodigo().equals(mpCodigo)) {
-                mp = m;
+    private void abrirFormularioEditar(String krdCodigo) {
+        Kardex k = null;
+        for (Kardex kardex : todosLosRegistros) {
+            if (kardex.getKrdCodigo().equals(krdCodigo)) {
+                k = kardex;
                 break;
             }
         }
 
-        if (mp != null) {
+        if (k != null) {
             MenuPrincipal menu = menuPrincipal;
-            MateriaPrimaForm form = new MateriaPrimaForm(conn, this, mp);
-            menu.registrarVista("MATERIA_PRIMA_FORM", form);
-            menu.mostrarVista("MATERIA_PRIMA_FORM");
-        }
-    }
-
-    private void eliminarMateriaPrima(String mpCodigo) {
-        int confirmacion = JOptionPane.showConfirmDialog(
-            this,
-            "¿Está seguro de eliminar esta materia prima?",
-            "Confirmar eliminación",
-            JOptionPane.YES_NO_OPTION
-        );
-
-        if (confirmacion == JOptionPane.YES_OPTION) {
-            MateriaPrima mp = null;
-            for (MateriaPrima m : todosLosRegistros) {
-                if (m.getMpCodigo().equals(mpCodigo)) {
-                    mp = m;
-                    break;
-                }
-            }
-
-            if (mp != null && mp.deleteDP()) {
-                JOptionPane.showMessageDialog(this, "Materia prima eliminada exitosamente");
-                cargarDatos();
-            } else {
-                JOptionPane.showMessageDialog(this, "Error al eliminar la materia prima", "Error", JOptionPane.ERROR_MESSAGE);
-            }
+            KardexForm form = new KardexForm(conn, this, k);
+            menu.registrarVista("KARDEX_FORM", form);
+            menu.mostrarVista("KARDEX_FORM");
         }
     }
 
@@ -264,22 +236,18 @@ public class MateriaPrimaView extends JPanel {
         cargarDatos();
     }
 
-    /* Mostrar los botones en la tabla */
+    // Renderer para mostrar botón en la tabla
     class ButtonRenderer extends JPanel implements TableCellRenderer {
-        private JButton btnActualizar;
-        private JButton btnEliminar;
+        private JButton btnEditar;
 
         public ButtonRenderer() {
             setLayout(new FlowLayout(FlowLayout.CENTER, 5, 5));
             setBackground(new Color(255, 178, 102));
 
-            btnActualizar = new JButton("Actualizar");
-            btnActualizar.setBackground(new Color(255, 178, 102));
-            add(btnActualizar);
-
-            btnEliminar = new JButton("Eliminar");
-            btnEliminar.setBackground(new Color(255, 178, 102));
-            add(btnEliminar);
+            btnEditar = new JButton("Actualizar");
+            btnEditar.setBackground(new Color(100, 149, 237));
+            btnEditar.setForeground(Color.WHITE);
+            add(btnEditar);
         }
 
         @Override
@@ -289,45 +257,37 @@ public class MateriaPrimaView extends JPanel {
         }
     }
 
-    // Editor para manejar clics en los botones
+    // Editor para manejar clics en el botón
     class ButtonEditor extends DefaultCellEditor {
         private JPanel panel;
-        private JButton btnActualizar;
-        private JButton btnEliminar;
-        private String mpCodigo;
+        private JButton btnEditar;
+        private String krdCodigo;
 
         public ButtonEditor(JCheckBox checkBox) {
             super(checkBox);
             panel = new JPanel(new FlowLayout(FlowLayout.CENTER, 5, 5));
             panel.setBackground(new Color(255, 178, 102));
 
-            btnActualizar = new JButton("Actualizar");
-            btnActualizar.setBackground(new Color(255, 178, 102));
-            btnActualizar.addActionListener(e -> {
+            btnEditar = new JButton("Actualizar");
+            btnEditar.setBackground(new Color(100, 149, 237));
+            btnEditar.setForeground(Color.WHITE);
+            btnEditar.addActionListener(e -> {
                 fireEditingStopped();
-                abrirFormularioEditar(mpCodigo);
+                abrirFormularioEditar(krdCodigo);
             });
-            panel.add(btnActualizar);
-
-            btnEliminar = new JButton("Eliminar");
-            btnEliminar.setBackground(new Color(255, 178, 102));
-            btnEliminar.addActionListener(e -> {
-                fireEditingStopped();
-                eliminarMateriaPrima(mpCodigo);
-            });
-            panel.add(btnEliminar);
+            panel.add(btnEditar);
         }
 
         @Override
         public Component getTableCellEditorComponent(JTable table, Object value,
                 boolean isSelected, int row, int column) {
-            mpCodigo = (String) value;
+            krdCodigo = (String) value;
             return panel;
         }
 
         @Override
         public Object getCellEditorValue() {
-            return mpCodigo;
+            return krdCodigo;
         }
     }
 }
