@@ -1,8 +1,10 @@
 package com.daf.controller;
 
+import java.io.FileInputStream;
 import java.sql.Connection;
 import java.time.LocalDate;
 import java.util.List;
+import java.util.Properties;
 
 import com.daf.model.ProductoModel;
 
@@ -20,10 +22,13 @@ public class Producto {
     private LocalDate prdFechaAlta;    // fecha de borrado lógico (cuando pasa a INA)
 
     private ProductoModel model;
+    private Properties props = new Properties();
 
     public Producto(Connection conn) {
         this.model = new ProductoModel(conn);
-        this.prdEstado = "ACT";
+        loadProperties();
+
+        this.prdEstado = props.getProperty("ESTADO_INDEPENDIENTE_INICIAL");
         this.prdFechaAlta = null;
     }
 
@@ -33,6 +38,7 @@ public class Producto {
                     Connection conn) {
         this.prdCodigo = prdCodigo;
         this.umVenta = umVenta;
+        loadProperties();
         this.catCodigo = catCodigo;
         this.prdDescripcion = prdDescripcion;
         this.prdPrecioVenta = prdPrecioVenta;
@@ -42,6 +48,20 @@ public class Producto {
         this.prdPromocion = prdPromocion;
         this.prdEstado = prdEstado;
         this.prdFechaAlta = prdFechaAlta;
+        this.model = new ProductoModel(conn);
+    }
+
+    private void loadProperties() {
+        try (FileInputStream fis = new FileInputStream("src/main/resources/config.properties")) {
+            props.load(fis);
+        } catch (Exception e) {
+            e.printStackTrace();
+        }
+    }
+
+    public Producto(String prdCodigo, String prdDescripcion, Connection conn) {
+        this.prdCodigo = prdCodigo;
+        this.prdDescripcion = prdDescripcion;
         this.model = new ProductoModel(conn);
     }
 
@@ -90,8 +110,8 @@ public class Producto {
     }
 
     public boolean deleteDP() {
-        this.prdEstado = "INA";
-        this.prdFechaAlta = LocalDate.now(); // <-- fecha del sistema al borrar
+        this.prdEstado = props.getProperty("ESTADO_INDEPENDIENTE_ELIMINADO");
+        this.prdFechaAlta = LocalDate.now();
         return model.delete(this.prdCodigo);
     }
 
@@ -125,9 +145,10 @@ public class Producto {
                 return "La prioridad debe ser F (FIFO) o L (LIFO)";
             }
         }
-        if (prdEstado == null || (!prdEstado.equals("ACT") && !prdEstado.equals("INA"))) {
-            return "El estado debe ser ACT o INA";
-        }
         return null;
+    }
+
+    public List<Producto> getForComboBoxDP() {
+        return model.getForComboBox();
     }
 }

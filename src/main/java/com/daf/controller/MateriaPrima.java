@@ -40,6 +40,7 @@ public class MateriaPrima {
                         String mpEstado, Connection conn) {
         this.mpCodigo = mpCodigo;
         this.umCompra = umCompra;
+        loadProperties();
         this.mpDescripcion = mpDescripcion;
         this.mpPrecioCompra = mpPrecioCompra;
         this.mpCantidad = mpCantidad;
@@ -105,6 +106,10 @@ public class MateriaPrima {
         this.mpEstado = mpEstado;
     }
 
+    public List<MateriaPrima> getForComboBoxDP() {
+        return model.getForComboBox();
+    }
+
     public boolean saveDP() {
         if (this.mpCodigo == null || this.mpCodigo.isEmpty()) {
             this.mpCodigo = model.generateNextCode();
@@ -115,7 +120,7 @@ public class MateriaPrima {
     }
 
     public boolean deleteDP() {
-        this.mpEstado = "INA";
+        this.mpEstado = props.getProperty("ESTADO_INDEPENDIENTE_ELIMINADO");
         return model.delete(this.mpCodigo);
     }
 
