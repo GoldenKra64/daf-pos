@@ -28,6 +28,7 @@ import javax.swing.border.LineBorder;
 
 import com.daf.view.kardex.KardexView;
 import com.daf.view.materiaprima.MateriaPrimaView;
+import com.daf.view.producto.ProductoView;
 
 public class MenuPrincipal extends JPanel {
 
@@ -115,7 +116,8 @@ public class MenuPrincipal extends JPanel {
     private JMenu crearMenu(String titulo) {
         JMenu menu = new JMenu(titulo);
         menu.setFont(new Font(props.getProperty("FONT_FAMILY"), Font.BOLD, Integer.parseInt(props.getProperty("FONT_SIZE"))));
-        return menu;
+        return 
+                menu;
     }
 
     /* Panel central */
@@ -204,7 +206,10 @@ public class MenuPrincipal extends JPanel {
     }
 
     private void abrirProducto() {
-        mostrarNoImplementado("Producto");
+        if (!vistas.containsKey("PRODUCTO")) {
+            registrarVista("PRODUCTO", new ProductoView(conn, this));
+        }
+        mostrarVista("PRODUCTO");
     }
 
     private void abrirProveedor() {
