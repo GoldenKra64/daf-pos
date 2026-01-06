@@ -160,4 +160,30 @@ public class MateriaPrimaModel {
 
         return materias;
     }
+    public List<MateriaPrima> getForComboBox() {
+        List<MateriaPrima> materias = new ArrayList<>();
+        String sql = "SELECT mp_codigo, mp_descripcion FROM materia_prima WHERE mp_estado = 'ACT' ORDER BY mp_descripcion";
+
+        try (PreparedStatement pstmt = conn.prepareStatement(sql);
+             ResultSet rs = pstmt.executeQuery()) {
+
+            while (rs.next()) {
+                MateriaPrima mp = new MateriaPrima(
+                    rs.getString("mp_codigo"),
+                    null,
+                    rs.getString("mp_descripcion"),
+                    0.0,
+                    0,
+                    null,
+                    null,
+                    conn
+                );
+                materias.add(mp);
+            }
+        } catch (SQLException e) {
+            System.err.println("Error al obtener materias primas para ComboBox: " + e.getMessage());
+            e.printStackTrace();
+        }
+        return materias;
+    }
 }

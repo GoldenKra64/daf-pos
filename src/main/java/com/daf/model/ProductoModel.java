@@ -1,11 +1,16 @@
 package com.daf.model;
 
-import com.daf.controller.Producto;
-
-import java.sql.*;
+import java.sql.Connection;
+import java.sql.Date;
+import java.sql.PreparedStatement;
+import java.sql.ResultSet;
+import java.sql.SQLException;
+import java.sql.Types;
 import java.time.LocalDate;
 import java.util.ArrayList;
 import java.util.List;
+
+import com.daf.controller.Producto;
 
 public class ProductoModel {
     private final Connection conn;
@@ -14,7 +19,6 @@ public class ProductoModel {
         this.conn = conn;
     }
 
-    // PRD + 7 dígitos => 10 chars total: PRD0000001
     public String generateNextCode() {
         String sql = "SELECT prd_codigo FROM producto ORDER BY prd_codigo DESC LIMIT 1";
         try (PreparedStatement pstmt = conn.prepareStatement(sql);
@@ -232,5 +236,43 @@ public class ProductoModel {
         }
 
         return productos;
+    }
+    public List<Producto> getForComboBox() {
+        List<Producto> productos = new ArrayList<>();
+        String sql = "SELECT prd_codigo, prd_descripcion FROM producto WHERE prd_estado = 'ACT' ORDER BY prd_descripcion";
+
+        try (PreparedStatement pstmt = conn.prepareStatement(sql);
+             ResultSet rs = pstmt.executeQuery()) {
+
+            while (rs.next()) {
+                Producto p = new Producto(
+                    rs.getString("prd_codigo"),
+                    rs.getString("prd_descripcion"),
+                    conn
+                );
+                productos.add(p);
+            }
+        } catch (SQLException e) {
+            System.err.println("Error al obtener productos: " + e.getMessage());
+            e.printStackTrace();
+        }
+
+        return productos;
+    }
+    public String getNombreByCodigo(String prdCodigo) {
+        String sql = "SELECT prd_descripcion FROM producto WHERE prd_codigo = ?";
+        
+        try (PreparedStatement pstmt = conn.prepareStatement(sql)) {
+            pstmt.setString(1, prdCodigo);
+            ResultSet rs = pstmt.executeQuery();
+            
+            if (rs.next()) {
+                return rs.getString("prd_descripcion");
+            }
+        } catch (SQLException e) {
+            System.err.println("Error al obtener nombre de producto: " + e.getMessage());
+        }
+        
+        return null;
     }
 }

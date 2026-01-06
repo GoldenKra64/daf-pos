@@ -26,6 +26,7 @@ import javax.swing.JPanel;
 import javax.swing.UIManager;
 import javax.swing.border.LineBorder;
 
+import com.daf.view.estandar.EstandarView;
 import com.daf.view.kardex.KardexView;
 import com.daf.view.materiaprima.MateriaPrimaView;
 import com.daf.view.producto.ProductoView;
@@ -236,7 +237,10 @@ public class MenuPrincipal extends JPanel {
     }
 
     private void abrirEstandar() {
-        mostrarNoImplementado("Estandar");
+        if (!vistas.containsKey("ESTANDAR")) {
+            registrarVista("ESTANDAR", new EstandarView(conn, this));
+        }
+        mostrarVista("ESTANDAR");
     }
 
     public void regresarMenu() {
