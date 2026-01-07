@@ -12,8 +12,8 @@ import com.daf.view.MenuPrincipal;
 
 public class LoginController {
 
-    private LoginView view;
-    private LoginModel model;
+    private final LoginView view;
+    private final LoginModel model;
 
     public LoginController(LoginView view) {
         this.view = view;
@@ -23,28 +23,36 @@ public class LoginController {
     }
 
     private void autenticar() {
+
         String usuario = view.getUsuario();
         String password = view.getPassword();
 
         try {
+            // 1️⃣ Autenticación
             Connection conn = model.autenticar(usuario, password);
 
-            view.mostrarMensaje(
+            // 2️⃣ Mensaje OK
+            JOptionPane.showMessageDialog(
+                view.getFrame(),
                 "Bienvenido al sistema",
+                "Acceso correcto",
                 JOptionPane.INFORMATION_MESSAGE
             );
 
-            // Pasar la conexión al resto del sistema
+            // 3️⃣ Crear menú principal
             MenuPrincipal menuPrincipal = new MenuPrincipal(conn);
 
+            // 4️⃣ Reemplazar contenido del JFrame (ESTE ERA EL BLOQUEO)
             JFrame frame = view.getFrame();
             frame.setContentPane(menuPrincipal);
             frame.revalidate();
             frame.repaint();
 
         } catch (SQLException ex) {
-            view.mostrarMensaje(
+            JOptionPane.showMessageDialog(
+                view.getFrame(),
                 "Usuario o contraseña incorrectos",
+                "Error",
                 JOptionPane.ERROR_MESSAGE
             );
         }
