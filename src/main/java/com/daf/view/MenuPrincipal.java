@@ -29,7 +29,9 @@ import javax.swing.border.LineBorder;
 import com.daf.view.estandar.EstandarView;
 import com.daf.view.kardex.KardexView;
 import com.daf.view.materiaprima.MateriaPrimaView;
+import com.daf.view.cliente.ClienteView;
 import com.daf.view.producto.ProductoView;
+import com.daf.view.proveedor.ProveedorView;
 
 public class MenuPrincipal extends JPanel {
 
