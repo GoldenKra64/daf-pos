@@ -29,6 +29,7 @@ import javax.swing.border.LineBorder;
 import com.daf.view.estandar.EstandarView;
 import com.daf.view.kardex.KardexView;
 import com.daf.view.materiaprima.MateriaPrimaView;
+import com.daf.view.cliente.ClienteView;
 import com.daf.view.producto.ProductoView;
 import com.daf.view.proveedor.ProveedorView;
 
@@ -224,7 +225,13 @@ public class MenuPrincipal extends JPanel {
     }
 
     private void abrirCliente() {
-        mostrarNoImplementado("Cliente");
+        // Si la vista aún no ha sido creada y guardada en el Map 'vistas'
+        if (!vistas.containsKey("CLIENTE")) {
+            // Creamos la instancia de tu ClienteView y la registramos
+            registrarVista("CLIENTE", new ClienteView(conn, this));
+        }
+        // Mostramos la vista usando el nombre que le dimos
+        mostrarVista("CLIENTE");
     }
 
     private void abrirBodega() {
