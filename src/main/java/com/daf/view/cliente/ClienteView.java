@@ -1,10 +1,6 @@
 package com.daf.view.cliente;
 
-import java.awt.BorderLayout;
-import java.awt.Color;
-import java.awt.Component;
-import java.awt.Dimension;
-import java.awt.FlowLayout;
+import java.awt.*;
 import java.io.FileInputStream;
 import java.sql.Connection;
 import java.util.List;
@@ -16,26 +12,20 @@ import com.daf.controller.Cliente;
 import com.daf.view.MenuPrincipal;
 
 public class ClienteView extends JPanel {
-    private Properties props;
     private Connection conn;
     private MenuPrincipal menuPrincipal;
     private Cliente clienteDP;
-
     private JTextField txtBuscar;
-    private JButton btnRegresar, btnBuscar, btnCrear;
     private JTable table;
     private DefaultTableModel tableModel;
-    
     private JLabel lblPaginacion;
-    private JButton btnAnterior, btnSiguiente;
     private int paginaActual = 1;
     private int REGISTROS_POR_PAGINA = 20;
-    private List<Cliente> todosLosRegistros;
     private List<Cliente> registrosFiltrados;
+    private Color naranjaDaf = new Color(255, 178, 102); // Color #FFB266
 
     public ClienteView(Connection conn, MenuPrincipal menuPrincipal) {
-        this.conn = conn;
-        this.menuPrincipal = menuPrincipal;
+        this.conn = conn; this.menuPrincipal = menuPrincipal;
         this.clienteDP = new Cliente(conn);
         loadProperties();
         initComponents();
@@ -43,175 +33,151 @@ public class ClienteView extends JPanel {
     }
 
     private void loadProperties() {
-        props = new Properties();
+        Properties props = new Properties();
         try (FileInputStream fis = new FileInputStream("src/main/resources/config.properties")) {
             props.load(fis);
-            try { REGISTROS_POR_PAGINA = Integer.parseInt(props.getProperty("REGISTROS_POR_PAGINA")); } catch (Exception e){}
+            REGISTROS_POR_PAGINA = Integer.parseInt(props.getProperty("REGISTROS_POR_PAGINA", "20"));
         } catch (Exception e) {}
     }
 
     private void initComponents() {
         setLayout(new BorderLayout(10, 10));
-        setOpaque(false);
-
-        // SUPERIOR
-        JPanel panelSuperior = new JPanel(new FlowLayout(FlowLayout.LEFT, 10, 10));
-        panelSuperior.setBackground(new Color(255, 178, 102));
-        btnRegresar = new JButton("Regresar");
-        btnRegresar.setPreferredSize(new Dimension(120, 35));
+        
+        // PANEL SUPERIOR
+        JPanel panelSup = new JPanel(new FlowLayout(FlowLayout.LEFT));
+        panelSup.setBackground(naranjaDaf);
+        JButton btnRegresar = new JButton("Regresar");
         btnRegresar.addActionListener(e -> menuPrincipal.regresarMenu());
-        panelSuperior.add(btnRegresar);
-        add(panelSuperior, BorderLayout.NORTH);
+        panelSup.add(btnRegresar);
+        add(panelSup, BorderLayout.NORTH);
 
-        // BUSQUEDA
-        JPanel panelBusqueda = new JPanel(new FlowLayout(FlowLayout.LEFT, 10, 10));
-        panelBusqueda.setBackground(new Color(255, 239, 204));
-        txtBuscar = new JTextField(30);
-        panelBusqueda.add(txtBuscar);
+        // PANEL BÚSQUEDA
+        JPanel panelBusca = new JPanel(new FlowLayout(FlowLayout.LEFT));
+        txtBuscar = new JTextField(25);
         
-        btnBuscar = new JButton("Buscar");
-        btnBuscar.setBackground(new Color(255, 178, 102));
-        btnBuscar.addActionListener(e -> buscarCliente());
-        panelBusqueda.add(btnBuscar);
+        JButton btnBusca = new JButton("Buscar");
+        btnBusca.setBackground(naranjaDaf);
+        btnBusca.setFocusPainted(false);
+        btnBusca.addActionListener(e -> buscarCliente());
+        
+        JButton btnNuevo = new JButton("Nuevo Cliente");
+        btnNuevo.setBackground(naranjaDaf);
+        btnNuevo.setFocusPainted(false);
+        btnNuevo.addActionListener(e -> abrirFormularioCrear());
+        
+        panelBusca.add(txtBuscar); panelBusca.add(btnBusca); panelBusca.add(btnNuevo);
 
-        btnCrear = new JButton("Nuevo Cliente");
-        btnCrear.setBackground(new Color(255, 178, 102));
-        btnCrear.addActionListener(e -> abrirFormularioCrear());
-        panelBusqueda.add(btnCrear);
-
-        // TABLA (SIN APELLIDO)
-        JPanel panelPrincipal = new JPanel(new BorderLayout(10, 10));
-        panelPrincipal.setBackground(new Color(255, 239, 204));
-        panelPrincipal.add(panelBusqueda, BorderLayout.NORTH);
-
-        // Columnas
-        String[] columnas = {"Código", "Cédula/RUC", "Nombre/Razón Social", "Teléfono", "Celular", "Acciones"};
-        tableModel = new DefaultTableModel(columnas, 0) {
-            public boolean isCellEditable(int row, int column) { return column == 5; }
+        // CONFIGURACIÓN DE TABLA
+        String[] cols = {"Código", "Cédula", "Nombre", "Apellido", "Teléfono", "Celular", "Acciones"};
+        tableModel = new DefaultTableModel(cols, 0) {
+            @Override public boolean isCellEditable(int r, int c) { return c == 6; }
         };
-
         table = new JTable(tableModel);
-        table.setRowHeight(40);
-        table.getColumnModel().getColumn(5).setCellRenderer(new ButtonRenderer());
-        table.getColumnModel().getColumn(5).setCellEditor(new ButtonEditor(new JCheckBox()));
-
-        JScrollPane scrollPane = new JScrollPane(table);
-        panelPrincipal.add(scrollPane, BorderLayout.CENTER);
-        add(panelPrincipal, BorderLayout.CENTER);
-
-        // PAGINACION
-        JPanel panelPaginacion = new JPanel(new FlowLayout(FlowLayout.CENTER));
-        panelPaginacion.setBackground(new Color(255, 239, 204));
-        btnAnterior = new JButton("<");
-        btnAnterior.addActionListener(e -> { if(paginaActual > 1) { paginaActual--; actualizarTabla(); }});
+        table.setRowHeight(35);
         
+        // Renderizador y Editor para la columna 6 (Acciones)
+        table.getColumnModel().getColumn(6).setCellRenderer(new ButtonRenderer());
+        table.getColumnModel().getColumn(6).setCellEditor(new ButtonEditor(new JCheckBox()));
+
+        JPanel panelCentro = new JPanel(new BorderLayout());
+        panelCentro.add(panelBusca, BorderLayout.NORTH);
+        panelCentro.add(new JScrollPane(table), BorderLayout.CENTER);
+        add(panelCentro, BorderLayout.CENTER);
+
+        // PANEL PAGINACIÓN
+        JPanel panelPag = new JPanel(new FlowLayout());
+        JButton btnAnt = new JButton("<");
+        btnAnt.addActionListener(e -> { if(paginaActual > 1){ paginaActual--; actualizarTabla(); }});
         lblPaginacion = new JLabel("1/1");
-        
-        btnSiguiente = new JButton(">");
-        btnSiguiente.addActionListener(e -> { 
-            int total = (int) Math.ceil((double) registrosFiltrados.size() / REGISTROS_POR_PAGINA);
-            if(paginaActual < total) { paginaActual++; actualizarTabla(); }
+        JButton btnSig = new JButton(">");
+        btnSig.addActionListener(e -> { 
+            if(paginaActual < (int)Math.ceil((double)registrosFiltrados.size()/REGISTROS_POR_PAGINA)){ paginaActual++; actualizarTabla(); }
         });
-
-        panelPaginacion.add(btnAnterior);
-        panelPaginacion.add(lblPaginacion);
-        panelPaginacion.add(btnSiguiente);
-        add(panelPaginacion, BorderLayout.SOUTH);
+        panelPag.add(btnAnt); panelPag.add(lblPaginacion); panelPag.add(btnSig);
+        add(panelPag, BorderLayout.SOUTH);
     }
 
     private void cargarDatos() {
-        todosLosRegistros = clienteDP.getAllDP();
-        registrosFiltrados = todosLosRegistros;
-        paginaActual = 1;
+        registrosFiltrados = clienteDP.getAllDP();
         actualizarTabla();
     }
 
     private void actualizarTabla() {
         tableModel.setRowCount(0);
-        int totalPaginas = (int) Math.ceil((double) registrosFiltrados.size() / REGISTROS_POR_PAGINA);
-        if (totalPaginas == 0) totalPaginas = 1;
-
         int inicio = (paginaActual - 1) * REGISTROS_POR_PAGINA;
         int fin = Math.min(inicio + REGISTROS_POR_PAGINA, registrosFiltrados.size());
-
         for (int i = inicio; i < fin; i++) {
             Cliente c = registrosFiltrados.get(i);
-            Object[] fila = {
-                c.getCliCodigo(),
-                c.getCliCedula(),
-                c.getCliNombre(),
-                c.getCliTelefono(),
-                c.getCliCelular(),
+            tableModel.addRow(new Object[]{
+                c.getCliCodigo(), c.getCliCedula(), c.getCliNombre(), 
+                c.getCliApellido(), c.getCliTelefono(), c.getCliCelular(), 
                 c.getCliCodigo()
-            };
-            tableModel.addRow(fila);
+            });
         }
-        lblPaginacion.setText(paginaActual + "/" + totalPaginas);
+        int total = (int) Math.ceil((double) registrosFiltrados.size() / REGISTROS_POR_PAGINA);
+        lblPaginacion.setText(paginaActual + "/" + (total == 0 ? 1 : total));
     }
 
     private void buscarCliente() {
-        String txt = txtBuscar.getText().trim();
-        if (txt.isEmpty()) registrosFiltrados = todosLosRegistros;
-        else registrosFiltrados = clienteDP.getByNameDP(txt);
-        paginaActual = 1;
-        actualizarTabla();
+        registrosFiltrados = clienteDP.getByNameDP(txtBuscar.getText().trim());
+        paginaActual = 1; actualizarTabla();
     }
 
     private void abrirFormularioCrear() {
-        ClienteForm form = new ClienteForm(conn, this, null);
-        menuPrincipal.registrarVista("CLIENTE_FORM", form);
+        menuPrincipal.registrarVista("CLIENTE_FORM", new ClienteForm(conn, this, null));
         menuPrincipal.mostrarVista("CLIENTE_FORM");
-    }
-
-    private void abrirFormularioEditar(String cliCodigo) {
-        for(Cliente c : todosLosRegistros) {
-            if(c.getCliCodigo().equals(cliCodigo)) {
-                ClienteForm form = new ClienteForm(conn, this, c);
-                menuPrincipal.registrarVista("CLIENTE_FORM", form);
-                menuPrincipal.mostrarVista("CLIENTE_FORM");
-                break;
-            }
-        }
-    }
-
-    private void eliminarCliente(String cliCodigo) {
-        if(JOptionPane.showConfirmDialog(this, "¿Eliminar?", "Confirme", JOptionPane.YES_NO_OPTION) == JOptionPane.YES_OPTION) {
-            Cliente c = new Cliente(conn);
-            c.setCliCodigo(cliCodigo);
-            if(c.deleteDP()) {
-                JOptionPane.showMessageDialog(this, "Eliminado");
-                cargarDatos();
-            } else {
-                JOptionPane.showMessageDialog(this, "Error al eliminar");
-            }
-        }
     }
 
     public void refrescarDatos() { cargarDatos(); }
 
+    // RENDERIZADOR DE BOTONES (Lo que se ve)
     class ButtonRenderer extends JPanel implements TableCellRenderer {
         public ButtonRenderer() {
-            setLayout(new FlowLayout(FlowLayout.CENTER, 5, 5));
-            setBackground(new Color(255, 178, 102));
-            add(new JButton("Editar"));
-            add(new JButton("Borrar"));
+            setLayout(new FlowLayout(FlowLayout.CENTER, 5, 0));
+            setOpaque(true);
+            JButton bEd = new JButton("Editar"); // Nombre cambiado
+            JButton bEl = new JButton("Eliminar"); // Nombre cambiado
+            bEd.setBackground(naranjaDaf);
+            bEl.setBackground(naranjaDaf);
+            add(bEd); add(bEl);
         }
-        public Component getTableCellRendererComponent(JTable table, Object value, boolean isSelected, boolean hasFocus, int row, int column) { return this; }
+        @Override public Component getTableCellRendererComponent(JTable t, Object v, boolean s, boolean f, int r, int c) { 
+            setBackground(s ? t.getSelectionBackground() : t.getBackground());
+            return this; 
+        }
     }
 
+    // EDITOR DE BOTONES (Lo que funciona al hacer clic)
     class ButtonEditor extends DefaultCellEditor {
-        JPanel panel; JButton btnEd, btnEl; String codigo;
+        JPanel p; String cod;
         public ButtonEditor(JCheckBox cb) {
-            super(cb);
-            panel = new JPanel(new FlowLayout(FlowLayout.CENTER, 5, 5));
-            panel.setBackground(new Color(255, 178, 102));
-            btnEd = new JButton("Editar");
-            btnEd.addActionListener(e -> { fireEditingStopped(); abrirFormularioEditar(codigo); });
-            btnEl = new JButton("Borrar");
-            btnEl.addActionListener(e -> { fireEditingStopped(); eliminarCliente(codigo); });
-            panel.add(btnEd); panel.add(btnEl);
+            super(cb); p = new JPanel(new FlowLayout(FlowLayout.CENTER, 5, 0));
+            JButton bEd = new JButton("Editar"); // Nombre cambiado
+            JButton bEl = new JButton("Eliminar"); // Nombre cambiado
+            bEd.setBackground(naranjaDaf);
+            bEl.setBackground(naranjaDaf);
+            bEd.addActionListener(e -> { fireEditingStopped(); editar(cod); });
+            bEl.addActionListener(e -> { fireEditingStopped(); eliminar(cod); });
+            p.add(bEd); p.add(bEl);
         }
-        public Component getTableCellEditorComponent(JTable t, Object v, boolean s, int r, int c) { codigo=(String)v; return panel; }
-        public Object getCellEditorValue() { return codigo; }
+        @Override public Component getTableCellEditorComponent(JTable t, Object v, boolean s, int r, int c) { 
+            cod = (String)v; p.setBackground(t.getSelectionBackground());
+            return p; 
+        }
+        @Override public Object getCellEditorValue() { return cod; }
+        
+        private void editar(String id) {
+            for(Cliente c : registrosFiltrados) if(c.getCliCodigo().equals(id)) {
+                menuPrincipal.registrarVista("CLIENTE_FORM", new ClienteForm(conn, ClienteView.this, c));
+                menuPrincipal.mostrarVista("CLIENTE_FORM");
+                break;
+            }
+        }
+        private void eliminar(String id) {
+            if(JOptionPane.showConfirmDialog(null, "¿Está seguro de eliminar este cliente?", "Confirmar", JOptionPane.YES_NO_OPTION) == 0) {
+                Cliente c = new Cliente(conn); c.setCliCodigo(id);
+                if(c.deleteDP()) cargarDatos();
+            }
+        }
     }
 }

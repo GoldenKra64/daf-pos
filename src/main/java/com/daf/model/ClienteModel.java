@@ -19,22 +19,22 @@ public class ClienteModel {
         return lista;
     }
 
-    public boolean save(String cod, String ct, String ced, String nom, String tlf, String cel, String dir, String em) {
-        String sql = "INSERT INTO public.cliente (cli_codigo, ct_codigo, cli_ruc_ced, cli_nombre, cli_telefono, cli_celular, cli_direccion, cli_mail, cli_estado) VALUES (?,?,?,?,?,?,?,?,'ACT')";
+    public boolean save(String cod, String ct, String ced, String nom, String ape, String tlf, String cel, String dir, String em) {
+        String sql = "INSERT INTO public.cliente (cli_codigo, ct_codigo, cli_ruc_ced, cli_nombre, cli_apellido, cli_telefono, cli_celular, cli_direccion, cli_mail, cli_estado) VALUES (?,?,?,?,?,?,?,?,?,'ACT')";
         try (PreparedStatement ps = conn.prepareStatement(sql)) {
             ps.setString(1, cod); ps.setString(2, ct); ps.setString(3, ced);
-            ps.setString(4, nom.toUpperCase()); ps.setString(5, tlf);
-            ps.setString(6, cel); ps.setString(7, dir); ps.setString(8, em);
+            ps.setString(4, nom.toUpperCase()); ps.setString(5, ape.toUpperCase());
+            ps.setString(6, tlf); ps.setString(7, cel); ps.setString(8, dir); ps.setString(9, em);
             return ps.executeUpdate() > 0;
         } catch (SQLException e) { e.printStackTrace(); return false; }
     }
 
-    public boolean update(String cod, String ct, String ced, String nom, String tlf, String cel, String dir, String em) {
-        String sql = "UPDATE public.cliente SET ct_codigo=?, cli_ruc_ced=?, cli_nombre=?, cli_telefono=?, cli_celular=?, cli_direccion=?, cli_mail=? WHERE cli_codigo=?";
+    public boolean update(String cod, String ct, String ced, String nom, String ape, String tlf, String cel, String dir, String em) {
+        String sql = "UPDATE public.cliente SET ct_codigo=?, cli_ruc_ced=?, cli_nombre=?, cli_apellido=?, cli_telefono=?, cli_celular=?, cli_direccion=?, cli_mail=? WHERE cli_codigo=?";
         try (PreparedStatement ps = conn.prepareStatement(sql)) {
             ps.setString(1, ct); ps.setString(2, ced); ps.setString(3, nom.toUpperCase());
-            ps.setString(4, tlf); ps.setString(5, cel); ps.setString(6, dir);
-            ps.setString(7, em); ps.setString(8, cod);
+            ps.setString(4, ape.toUpperCase()); ps.setString(5, tlf); ps.setString(6, cel);
+            ps.setString(7, dir); ps.setString(8, em); ps.setString(9, cod);
             return ps.executeUpdate() > 0;
         } catch (SQLException e) { e.printStackTrace(); return false; }
     }
@@ -58,9 +58,9 @@ public class ClienteModel {
 
     public List<Cliente> getBySearch(String texto) {
         List<Cliente> lista = new ArrayList<>();
-        String sql = "SELECT * FROM public.cliente WHERE cli_estado = 'ACT' AND (cli_nombre ILIKE ? OR cli_ruc_ced LIKE ?)";
+        String sql = "SELECT * FROM public.cliente WHERE cli_estado = 'ACT' AND (cli_nombre ILIKE ? OR cli_apellido ILIKE ? OR cli_ruc_ced LIKE ?)";
         try (PreparedStatement ps = conn.prepareStatement(sql)) {
-            ps.setString(1, "%" + texto + "%"); ps.setString(2, "%" + texto + "%");
+            ps.setString(1, "%" + texto + "%"); ps.setString(2, "%" + texto + "%"); ps.setString(3, "%" + texto + "%");
             try (ResultSet rs = ps.executeQuery()) {
                 while (rs.next()) lista.add(mapRow(rs));
             }
@@ -72,10 +72,10 @@ public class ClienteModel {
         return new Cliente(
             rs.getString("cli_codigo").trim(), rs.getString("ct_codigo").trim(),
             rs.getString("cli_ruc_ced").trim(), rs.getString("cli_nombre").trim(),
+            rs.getString("cli_apellido") != null ? rs.getString("cli_apellido").trim() : "",
             rs.getString("cli_telefono"), rs.getString("cli_celular"),
             rs.getString("cli_direccion"), rs.getString("cli_mail"),
-            rs.getString("cli_estado").trim(),
-            rs.getString("cli_fecha_alta"), // Campo de fecha añadido
+            rs.getString("cli_estado").trim(), rs.getString("cli_fecha_alta"),
             conn
         );
     }
