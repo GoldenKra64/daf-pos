@@ -90,11 +90,6 @@ public class Proveedor {
             return "La dirección es obligatoria";
         }
 
-        // Duplicado RUC (si tu model ya lo implementa)
-        if (model.existsByRuc(prvRuc, prvCodigo)) {
-            return "Proveedor ya se encuentra registrado";
-        }
-
         return null;
     }
 

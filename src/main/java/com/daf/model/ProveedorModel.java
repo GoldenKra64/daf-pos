@@ -121,9 +121,38 @@ public class ProveedorModel {
     }
 
     /* =========================================================
-       VALIDAR RUC DUPLICADO (ACTIVOS)
+       VALIDAR RUC DUPLICADO (CREAR)
        ========================================================= */
-    public boolean existsByRuc(String ruc, String codigoActual) {
+    public boolean existsByRuc(String ruc) {
+
+        String sql = """
+            SELECT 1
+            FROM proveedor
+            WHERE prv_ruc = ?
+              AND prv_estado = 'ACT'
+            LIMIT 1
+        """;
+
+        try (PreparedStatement ps = conn.prepareStatement(sql)) {
+            ps.setString(1, ruc);
+            try (ResultSet rs = ps.executeQuery()) {
+                return rs.next();
+            }
+        } catch (SQLException e) {
+            e.printStackTrace();
+            return true;
+        }
+    }
+
+    /* =========================================================
+       VALIDAR RUC DUPLICADO (EDITAR)
+       ========================================================= */
+    public boolean existsByRucExceptCodigo(String ruc, String codigoActual) {
+
+        // ✅ FIX: protección contra NULL
+        if (codigoActual == null || codigoActual.isBlank()) {
+            return false;
+        }
 
         String sql = """
             SELECT 1
@@ -135,14 +164,11 @@ public class ProveedorModel {
         """;
 
         try (PreparedStatement ps = conn.prepareStatement(sql)) {
-
             ps.setString(1, ruc);
             ps.setString(2, codigoActual);
-
             try (ResultSet rs = ps.executeQuery()) {
                 return rs.next();
             }
-
         } catch (SQLException e) {
             e.printStackTrace();
             return true;
@@ -225,8 +251,8 @@ public class ProveedorModel {
 
         List<Proveedor> list = new ArrayList<>();
 
-    final String sql =
-        "SELECT " +
+        final String sql =
+            "SELECT " +
             " TRIM(p.prv_codigo)      AS prv_codigo, " +
             " TRIM(p.ct_codigo)       AS ct_codigo, " +
             " TRIM(p.prv_razonsocial) AS prv_razonsocial, " +
@@ -237,9 +263,9 @@ public class ProveedorModel {
             " TRIM(p.prv_direccion)   AS prv_direccion, " +
             " TRIM(p.prv_estado)      AS prv_estado, " +
             " TRIM(c.ct_descripcion)  AS ciudad " +
-        "FROM proveedor p " +
-        "JOIN ciudad c ON c.ct_codigo = p.ct_codigo " +
-        "WHERE p.prv_estado = 'ACT' " +
+            "FROM proveedor p " +
+            "JOIN ciudad c ON c.ct_codigo = p.ct_codigo " +
+            "WHERE p.prv_estado = 'ACT' " +
             "AND ( " +
             "   TRIM(p.prv_razonsocial) ILIKE ? OR " +
             "   TRIM(p.prv_ruc)         ILIKE ? OR " +
@@ -249,8 +275,7 @@ public class ProveedorModel {
             "   TRIM(p.prv_direccion)  ILIKE ? OR " +
             "   CAST(p.prv_codigo   AS TEXT) ILIKE ? " +
             ") " +
-        "ORDER BY p.prv_razonsocial";
-
+            "ORDER BY p.prv_razonsocial";
 
         try (PreparedStatement ps = conn.prepareStatement(sql)) {
 
@@ -258,7 +283,6 @@ public class ProveedorModel {
             for (int i = 1; i <= 7; i++) {
                 ps.setString(i, filtro);
             }
-
 
             try (ResultSet rs = ps.executeQuery()) {
 
