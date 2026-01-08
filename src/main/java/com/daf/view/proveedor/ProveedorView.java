@@ -88,7 +88,8 @@ public class ProveedorView extends JPanel {
                         "Teléfono",
                         "Celular",
                         "Correo",
-                        "Dirección"
+                        "Dirección",
+                        "Ciudad"   // 👈 NUEVA COLUMNA
                 }, 0
         ) {
             @Override
@@ -133,7 +134,8 @@ public class ProveedorView extends JPanel {
                     p.getPrvTelefono(),
                     p.getPrvCelular(),
                     p.getPrvMail(),
-                    p.getPrvDireccion()
+                    p.getPrvDireccion(),
+                    p.getCiudadDescripcion() // 👈 CIUDAD
             });
         }
     }

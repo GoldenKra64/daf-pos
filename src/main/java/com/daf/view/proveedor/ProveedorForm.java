@@ -1,5 +1,10 @@
 package com.daf.view.proveedor;
 
+import com.daf.model.Ciudad;
+import com.daf.model.CiudadModel;
+import com.daf.controller.Proveedor;
+import com.daf.view.MenuPrincipal;
+
 import java.awt.Color;
 import java.awt.Dimension;
 import java.awt.Font;
@@ -10,14 +15,12 @@ import java.sql.Connection;
 
 import javax.swing.BorderFactory;
 import javax.swing.JButton;
+import javax.swing.JComboBox;
 import javax.swing.JLabel;
 import javax.swing.JOptionPane;
 import javax.swing.JPanel;
 import javax.swing.JTextField;
 import javax.swing.SwingConstants;
-
-import com.daf.controller.Proveedor;
-import com.daf.view.MenuPrincipal;
 
 public class ProveedorForm extends JPanel {
 
@@ -26,6 +29,7 @@ public class ProveedorForm extends JPanel {
     private final ProveedorView vistaAnterior;
     private Proveedor proveedorActual;
 
+    private JComboBox<Ciudad> cboCiudad;
     private JTextField txtRazonSocial;
     private JTextField txtRuc;
     private JTextField txtTelefono;
@@ -33,8 +37,7 @@ public class ProveedorForm extends JPanel {
     private JTextField txtMail;
     private JTextField txtDireccion;
 
-    // ⚠ Ciudad por defecto (hasta implementar selector)
-    private static final String CIUDAD_DEFAULT = "CT01";
+    /* ================= CONSTRUCTOR ================= */
 
     public ProveedorForm(
             Connection conn,
@@ -52,8 +55,11 @@ public class ProveedorForm extends JPanel {
 
         add(crearPanelFormulario());
 
+        cargarCiudades();
+
         if (proveedorActual != null) {
             cargarDatos();
+            seleccionarCiudadProveedor(proveedorActual.getCtCodigo());
         }
     }
 
@@ -61,8 +67,10 @@ public class ProveedorForm extends JPanel {
 
     private JPanel crearPanelFormulario() {
 
+        cboCiudad = new JComboBox<>();
+
         JPanel panel = new JPanel(new GridBagLayout());
-        panel.setPreferredSize(new Dimension(580, 480));
+        panel.setPreferredSize(new Dimension(580, 520));
         panel.setBackground(Color.WHITE);
         panel.setBorder(BorderFactory.createCompoundBorder(
                 BorderFactory.createLineBorder(new Color(180, 180, 180)),
@@ -73,7 +81,6 @@ public class ProveedorForm extends JPanel {
         gbc.insets = new Insets(10, 10, 10, 10);
         gbc.fill = GridBagConstraints.HORIZONTAL;
 
-        /* ===== TÍTULO ===== */
         JLabel lblTitulo = new JLabel(
                 proveedorActual == null ? "NUEVO PROVEEDOR" : "EDITAR PROVEEDOR",
                 SwingConstants.CENTER
@@ -86,7 +93,6 @@ public class ProveedorForm extends JPanel {
         panel.add(lblTitulo, gbc);
         gbc.gridwidth = 1;
 
-        /* ===== CAMPOS ===== */
         txtRazonSocial = crearCampoTexto();
         txtRuc = crearCampoTexto();
         txtTelefono = crearCampoTexto();
@@ -101,8 +107,8 @@ public class ProveedorForm extends JPanel {
         agregarCampo(panel, gbc, fila++, "Celular:", txtCelular);
         agregarCampo(panel, gbc, fila++, "Correo electrónico:", txtMail);
         agregarCampo(panel, gbc, fila++, "Dirección:", txtDireccion);
+        agregarCampo(panel, gbc, fila++, "Ciudad:", cboCiudad);
 
-        /* ===== BOTONES ===== */
         JButton btnGuardar = new JButton("Guardar");
         btnGuardar.setBackground(new Color(76, 175, 80));
         btnGuardar.setForeground(Color.WHITE);
@@ -126,6 +132,27 @@ public class ProveedorForm extends JPanel {
         return panel;
     }
 
+    /* ================= CIUDADES ================= */
+
+    private void cargarCiudades() {
+        CiudadModel model = new CiudadModel(conn);
+        cboCiudad.removeAllItems();
+        for (Ciudad c : model.getAll()) {
+            cboCiudad.addItem(c);
+        }
+    }
+
+    private void seleccionarCiudadProveedor(String ctCodigo) {
+        if (ctCodigo == null) return;
+        for (int i = 0; i < cboCiudad.getItemCount(); i++) {
+            Ciudad c = cboCiudad.getItemAt(i);
+            if (c.getCtCodigo().equals(ctCodigo)) {
+                cboCiudad.setSelectedIndex(i);
+                break;
+            }
+        }
+    }
+
     /* ================= CAMPOS ================= */
 
     private JTextField crearCampoTexto() {
@@ -143,7 +170,7 @@ public class ProveedorForm extends JPanel {
             GridBagConstraints gbc,
             int fila,
             String etiqueta,
-            JTextField campo
+            java.awt.Component campo
     ) {
         gbc.gridx = 0;
         gbc.gridy = fila;
@@ -172,24 +199,29 @@ public class ProveedorForm extends JPanel {
                 ? new Proveedor(conn)
                 : proveedorActual;
 
-        // ✅ ciudad obligatoria según controller
-        p.setCtCodigo(CIUDAD_DEFAULT);
+        Ciudad ciudad = (Ciudad) cboCiudad.getSelectedItem();
+        if (ciudad == null) {
+            JOptionPane.showMessageDialog(
+                    this,
+                    "Debe seleccionar una ciudad",
+                    "Validación",
+                    JOptionPane.WARNING_MESSAGE
+            );
+            return;
+        }
 
+        p.setCtCodigo(ciudad.getCtCodigo());
         p.setPrvRazonSocial(txtRazonSocial.getText().trim());
         p.setPrvRuc(txtRuc.getText().trim());
         p.setPrvTelefono(txtTelefono.getText().trim());
         p.setPrvCelular(txtCelular.getText().trim());
         p.setPrvMail(txtMail.getText().trim());
         p.setPrvDireccion(txtDireccion.getText().trim());
+        
 
         String error = p.validate();
         if (error != null) {
-            JOptionPane.showMessageDialog(
-                    this,
-                    error,
-                    "Validación",
-                    JOptionPane.WARNING_MESSAGE
-            );
+            JOptionPane.showMessageDialog(this, error, "Validación", JOptionPane.WARNING_MESSAGE);
             return;
         }
 
@@ -198,16 +230,11 @@ public class ProveedorForm extends JPanel {
             vistaAnterior.refrescarDatos();
             volver();
         } else {
-            JOptionPane.showMessageDialog(
-                    this,
-                    "Error al guardar proveedor",
-                    "Error",
-                    JOptionPane.ERROR_MESSAGE
-            );
+            JOptionPane.showMessageDialog(this, "Error al guardar proveedor", "Error", JOptionPane.ERROR_MESSAGE);
         }
     }
 
- private void volver() {
+    private void volver() {
         menu.mostrarVista("PROVEEDOR");
     }
 }
