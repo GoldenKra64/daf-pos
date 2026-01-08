@@ -1,10 +1,5 @@
 package com.daf.view.proveedor;
 
-import com.daf.model.Ciudad;
-import com.daf.model.CiudadModel;
-import com.daf.controller.Proveedor;
-import com.daf.view.MenuPrincipal;
-
 import java.awt.Color;
 import java.awt.Dimension;
 import java.awt.Font;
@@ -21,6 +16,12 @@ import javax.swing.JOptionPane;
 import javax.swing.JPanel;
 import javax.swing.JTextField;
 import javax.swing.SwingConstants;
+
+import com.daf.controller.Proveedor;
+import com.daf.model.Ciudad;
+import com.daf.model.CiudadModel;
+import com.daf.model.ProveedorModel;
+import com.daf.view.MenuPrincipal;
 
 public class ProveedorForm extends JPanel {
 
@@ -60,6 +61,7 @@ public class ProveedorForm extends JPanel {
         if (proveedorActual != null) {
             cargarDatos();
             seleccionarCiudadProveedor(proveedorActual.getCtCodigo());
+            System.out.println("DEBUG EDITAR");
         }
     }
 
@@ -224,6 +226,48 @@ public class ProveedorForm extends JPanel {
             JOptionPane.showMessageDialog(this, error, "Validación", JOptionPane.WARNING_MESSAGE);
             return;
         }
+
+        // ================= VALIDAR RUC DUPLICADO (CREAR) =================
+        if (proveedorActual == null) {
+
+            ProveedorModel proveedorModel = new ProveedorModel(conn);
+            String ruc = p.getPrvRuc();
+
+            if (proveedorModel.existsByRuc(ruc)) {
+                JOptionPane.showMessageDialog(
+                        this,
+                        "El RUC ingresado ya se encuentra registrado.\nNo se permiten proveedores duplicados.",
+                        "RUC duplicado",
+                        JOptionPane.ERROR_MESSAGE
+                );
+                return;
+            }
+        }
+
+    // ================= VALIDAR RUC DUPLICADO (EDITAR) =================
+    if (proveedorActual != null) {
+
+        ProveedorModel proveedorModel = new ProveedorModel(conn);
+        String ruc = p.getPrvRuc();
+        String codigoActual = p.getPrvCodigo();
+
+        // DEBUG CORRECTO (AQUÍ SÍ EXISTEN)
+        System.out.println("DEBUG EDITAR");
+        System.out.println("RUC = " + ruc);
+        System.out.println("CODIGO ACTUAL = [" + codigoActual + "]");
+
+        if (proveedorModel.existsByRucExceptCodigo(ruc, codigoActual)) {
+            JOptionPane.showMessageDialog(
+                    this,
+                    "El RUC ingresado ya pertenece a otro proveedor.\nNo se permiten duplicados.",
+                    "RUC duplicado",
+                    JOptionPane.ERROR_MESSAGE
+            );
+            return;
+        }
+    }
+
+
 
         if (p.saveDP()) {
             JOptionPane.showMessageDialog(this, "Proveedor guardado correctamente");
