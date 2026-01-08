@@ -242,7 +242,10 @@ public class MenuPrincipal extends JPanel {
     }
 
     private void abrirOrdenCompra() {
-        mostrarNoImplementado("Orden de Compra");
+        if (!vistas.containsKey("ORDEN_COMPRA")) {
+            registrarVista("ORDEN_COMPRA", new com.daf.view.ordencompra.OrdenCompraView(conn, this));
+        }
+        mostrarVista("ORDEN_COMPRA");
     }
 
     private void abrirFactura() {
