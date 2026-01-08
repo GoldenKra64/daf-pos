@@ -17,6 +17,8 @@ public class Proveedor {
     private String prvMail;
     private String prvDireccion;
     private String prvEstado;
+    private String ciudadDescripcion;
+
 
     private final ProveedorModel model;
 
@@ -139,6 +141,7 @@ public class Proveedor {
     public String getPrvMail() { return prvMail; }
     public String getPrvDireccion() { return prvDireccion; }
     public String getPrvEstado() { return prvEstado; }
+    public String getCiudadDescripcion() { return ciudadDescripcion; }
 
     /* ===== SETTERS ===== */
     public void setCtCodigo(String v) { this.ctCodigo = trim(v); }
@@ -149,7 +152,8 @@ public class Proveedor {
     public void setPrvMail(String v) { this.prvMail = trim(v); }
     public void setPrvDireccion(String v) { this.prvDireccion = trim(v); }
     public void setPrvEstado(String v) { this.prvEstado = trim(v); }
-
+    public void setCiudadDescripcion(String ciudadDescripcion) { this.ciudadDescripcion = ciudadDescripcion; }
+    
     private String trim(String v) {
         return v == null ? null : v.trim();
     }
